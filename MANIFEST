@@ -1,6 +1,14 @@
-Changes
-interface.pm
+Build.PL
 Makefile.PL
 MANIFEST
+META.yml
 README
-t/1.t
+lib/interface.pm
+t/00basic.t
+t/10load.t
+t/20use.t
+t/30implements.t
+t/lib/MyBrokenModule.pm
+t/lib/MyInterface.pi
+t/lib/MySuperInterface.pi
+t/lib/MyTestModule.pm

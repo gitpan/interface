@@ -1,0 +1,13 @@
+use interface;
+
+interface MyInterface;
+
+use interface MySuperInterface;
+
+sub foo($);
+
+sub bar($@);
+
+sub foobar;
+
+1;

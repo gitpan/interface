@@ -1,0 +1,15 @@
+--- #YAML:1.0
+name: interface
+version: 0.01
+license: perl
+distribution_type: module
+requires:
+  Filter::Simple: 0
+recommends: {}
+build_requires: {}
+conflicts: {}
+provides:
+  interface:
+    file: lib/interface.pm
+    version: 0.01
+generated_by: Module::Build version 0.18
