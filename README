@@ -1,139 +1,152 @@
 NAME
-    protocol - Define an API for use by a package
+    interface - simple compile time interface checking for OO Perl
 
 SYNOPSIS
-    Define a protocol:
+      package Foo;
 
-     use protocol;
+      use interface 'Iterator', 'Generator', 'Clonable', 'DBI::DBD';
 
-     protocol My::API;
+ABSTRACT
+    Compile-time interface complaince testing. Inspects the methods defined
+    in your module, and compares them against the methods defined in the
+    modules you list. Requires no special or additional syntax.
 
-     use protocol qw(My::Other::API);
-
-     sub foo ($);
-     sub bar ($@);
-
-    Use a protocol:
-
-     package My::Implementation;
-
-     use protocol qw(My::API);
-
-    Other methods:
-
-     UNIVERSAL::implements( My::Implementation => 'My::API' );
+    Should you fail to implement any method contained in any of the listed
+    classes, compile will abort with an error message.
 
 DESCRIPTION
-    This package introduces a new Perl keyword, "protocol", that allows API
-    declarations via subroutine prototypes.
+    An "interface" may need some explaination. It's an Object Orientation
+    idea, also known as polymorphism, that says that you should be able to
+    use interchangeable objects interchangably. Thank heavens the OO people
+    came and showed us the light!
 
-    Usually, an algorithm is written to require objects of particular types
-    to make sure certain methods are available. This can tie certain
-    programs to particular object frameworks, which might not always be the
-    best way to write a program. This module tries to correct this by
-    allowing interfaces to be defined without creating a class. These
-    interface definitions are called `protocols' after the Objective-C
-    concept (See Objective-C documentation for more details).
+    The flip side of polymorphism is type safety. In Perl, ->isa() lets you
+    check to make sure something is derived from a base class. The logic
+    goes that if its derived from a base class, and we're looking for an
+    object that fills the need of the base class, then the subclass will
+    work just as well, and we can accept it. Extending objects is done by
+    subclassing base classes and passing off the subclasses as versions of
+    the original.
 
-    Protocols not only allow more flexible tracking of implemented APIs, but
-    can also aid in the debugging process during module development. Any
-    subroutines that are prototyped in a protocol are prototyped in the
-    using package. For example, if package A uses protocol B, and protocol B
-    defines subroutine C, then A::C will be prototyped. Perl will then issue
-    warnings if the subsequent subroutine definition doesn't match the
-    prototype given in the protocol definition.
+    While this OO rote might almost have you convinced that the world works
+    this way, this turns out to be almostly completely useless. In the real
+    world, there are only a few reasons that one object is used in place of
+    another: Someone wrote some really horrible code, and you want to swap
+    out their object with a better version of the same thing. You're
+    switching to an object that does the same thing but in a different way,
+    for example using a database store instead of a flat file store. You're
+    making some minor changes to an existing object and you want to be able
+    to extend the base class in other directions in the future. Only in the
+    last case is inherited code with subclassing even useful. In fact, there
+    is a move towards using composition (has-a) instead of inheritance
+    (is-a) accrost the whole industry, mainly because they got tired of
+    people pointing out that OO sucks because inheritance only serves to
+    make a great big mess of otherwise clean code.
 
-  DEFINING A PROTOCOL
+    Seperating the interface from the implementation lets you make multiple
+    implementations of an idea. They can share code with each other, but
+    they don't have to. The programmer has assured us that their module does
+    what is required by stating that it implements the interface. While this
+    isn't proof that the code works, climaing to implement an interface is a
+    kind of contract. The programmer knows what work is required of him and
+    she has agreed to deliver on it.
 
-    A protocol is defined in the same way a package is defined, except using
-    the "protocol" keyword instead of the "package" keyword:
+    The interface definition can be a package full of stub methods that
+    don't do anything, or it could be an actual working implementation of an
+    object you're striving for compatability with. The first case is
+    cleanist, and the package full of stubs serves as good documentation.
+    The second case can be handy in cases where the first case wasn't done
+    but someone ignored the Wisdom of the Interface and wrote a package
+    anyway.
 
-     use protocol;
-     protocol My::SimpleIO::Protocol;
+    The Wisdom of the Interface says to write an interface for each new kind
+    of object that could have multiple implementations. The interfaces
+    serves as a contract for the minimum features needed to implement an
+    object of that type. When working with objects - creating them, checking
+    types when you accept them, etc - always work with the interface type,
+    never the type of an individual implementation. This keeps your code
+    generic.
 
-     sub read($);
-     sub write($;@);
+    In order to do the composition thing (has-a), you contain one or more
+    objects that you need to do your work, you implement an interface that
+    dispatches method calls to those objects. Perhaps your new() method
+    creates those objects and stores them in instance variables.
 
-    You can also sub-class protocols by using them:
+  EXPORT
+    None. EXPORT is silly. You stay in your namespace, I'll stay in mine.
 
-     protocol My::MoreAdvanced::IO::Protocol;
+DIAGNOSTICS
+    Failing to implement a required method will generate a fatal similar to
+    the following:
 
-     use protocol My::SimpleIO::Protocol;
+    Baz is missing methods: bar from Stub, and import from your, and import
+    from ImplicitThis at interface.pm line 47. BEGIN failed--compilation
+    aborted at Baz.pm line 5.
 
-     sub open($;$);
-     sub close($);
+  AGNOSTICS
+    Hear the one about the insomniac dyslexic agnostic? He stayed up all
+    night wondering if there was a Dog.
 
-    If you want to make sure a method is available but don't care about the
-    prototype, you can simply declare it without a prototype:
+SEE ALSO
+    See http://www.slowass.net/wiki/ for more on Perl OO, including
+    information about how and why to use interfaces.
 
-     protocol My::Sans::Prototype;
+    Damian Conway. Speaking of Damian, this is a cheap knockoff of his
+    Class::Contract module. However, we have no special syntax!
 
-     sub foo;
-     sub bar;
+    Speaking of speaking of Damian Conway, if you ever get a chance to see
+    him talk, you should go.
 
-    Subroutines without prototypes in a protocol won't have any effect
-    except when you have an explicit check for the protocol.
+    NEXT.pm, by Damian Conway.
 
-  USING A PROTOCOL
-
-    Using a protocol is simple:
-
-     use protocol qw( protocol list );
-
-    This will push the protocol list onto the package global "@PROTOCOLS"
-    and prototype any subroutines that have prototypes in the protocols. If
-    you want people to think you implement a particular protocol without
-    getting the benefit of the prototypes, then push the prototype name onto
-    the "@PROTOCOLS" global without the "use" statement. Protocols are not
-    expected to load any code.
-
-    Note that a class is considered to implement the protocol if any
-    super-class implements the protocol. The class does not gain the benefit
-    of the prototypes unless it explicitely "use"s the protocol.
-
-  TRACKING PROTOCOL SUBSCRIPTIONS
-
-    Instead of requiring objects derived from a particular class, you now
-    can check that the object implements a particular protocol:
-
-      die "Need to be able to read and write"
-           unless $object -> implements("My::IO::Protocol");
-
-    This even works if "$object"'s class doesn't know anything about
-    protocols. The "implements" method will look for the actual methods in
-    that case and check their signature against the expected signature
-    defined in "My::IO::Protocol". If no signature is expected, it checks
-    for the method's existance using "UNIVERSAL::can".
-
-    Protocols can co-exist with packages. The package global "@PROTOCOLS" is
-    used to track protocol subscriptions similar to the way "@ISA" tracks
-    class inheritance. A class has a protocol if it is listed in the
-    "@PROTOCOLS" array, is implemented in a super-class, or is implemented
-    implicitely in the class.
+    ImplicitThis.pm, also by myself.
 
 BUGS
-    There are sure to be some. The filter is not the most robust and may be
-    easily confused. This is a source filter. Some areas that need
-    improvement:
+    Yes.
 
-    *   Better error reporting (almost non-existent when defining protocols)
+    This will very likely break highly introspective code, for example,
+    anything Damian Conway might write.
 
-    *   Anything `out of the ordinary' can lead to undefined results (this
-        includes code other than simple prototypes in the protocol
-        definition).
+    Does not work with packages not stored in a file where "use" can find
+    them. This bug applies to programs run from "perl -e" and in subpackages
+    burried in other packages.
 
-    *   Any code mixed in to the protocol definition is ignored. The
-        protocol definition is replaced by `1;' in the source that Perl sees
-        after the filter. This also means that line numbers will be off.
+    It should be an error to use two different interfaces that both declare
+    a method of the same name, as it would be ambigious which you are
+    intending to implement. I haven't decided. Perhaps I'll just make this
+    warning.
 
-    *   Documentation.
+    When implementing an interface, interface.pm searches only that case -
+    not the classes listed in @ISA. This leads to incomplete interface
+    requirements when using a subclass as the interface.
+
+    This module was done in pragma-style without permission. I'm interested
+    on feedback on how to handle this.
+
+    Another arrangement worth considering is to create a Class::Interface
+    thing that the interface uses, not your code. When you use that
+    interface, the code is awaken, and import() inspects your code without
+    exporting anything. This would just move the logic around. Interfaces
+    would be marked interfaces rather than the people who use the interfaces
+    making them as interfaces. Once again, thoughts and suggestions
+    encouraged.
+
+    The code is frightening.
+
+    There are spelling and grammar errors in this POD documentation.
+
+    My wiki is really slow because my computer is slow, doesn't have much
+    memory, and its 4000 lines of code. I need to trim that down. I think I
+    could do it in about 400 lines.
 
 AUTHOR
-    James Smith, <jsmith@cpan.org>
+    Scott Walters, SWALTERS, Root of all Evil, <scott@slowass.net>
 
-COPYRIGHT
-    Copyright (C) 2003 Texas A&M University. All Rights Reserved.
+COPYRIGHT AND LICENSE
+    Copyright 2002 by Scott Walters
 
-    This module is free software; you can redistribute it and/or modify it
-    under the same terms as Perl itself.
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself. If you don't believe in free
+    software, just remember that free software programmers are gnome-like. I
+    wouldn't want to be visited by gnomes.
 

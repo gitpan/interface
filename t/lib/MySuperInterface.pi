@@ -1,9 +1,0 @@
-use interface;
-
-interface MySuperInterface;
-
-sub this ($@);
-
-sub that (\$@);
-
-1;

@@ -1,11 +1,12 @@
+use 5.008;
 use ExtUtils::MakeMaker;
-
-WriteMakefile
-  (
-   'NAME'       => 'protocol',
-   'VERSION_FROM' => "lib/protocol.pm",
-   'PREREQ_PM' => {
-                   'Filter::Simple' => 0,
-                  },
-   'dist' => { COMPRESS=>"gzip", SUFFIX=>"gz", },
-  );
+# See lib/ExtUtils/MakeMaker.pm for details of how to influence
+# the contents of the Makefile that is written.
+WriteMakefile(
+    'NAME'		=> 'interface',
+    'VERSION_FROM'	=> 'interface.pm', # finds $VERSION
+    'PREREQ_PM'		=> {}, # e.g., Module::Name => 1.1
+    ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
+      (ABSTRACT_FROM => 'interface.pm', # retrieve abstract from module
+       AUTHOR     => '& of all Evil <root@slowass.net>') : ()),
+);
