@@ -12,78 +12,71 @@ use 5.006;
 # use strict;
 # use warnings;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 # per-package locks to avoid reentry when we make them finish loading
 
-my %locks;
+my @checkqueue;
 
 sub import {
 
   my $callerpackage = caller;
 
-  return 1 if($locks{$callerpackage}); $locks{$callerpackage} = 1;
-  
   shift; my @interfaces = @_;
-
-  # they need to finish loading before we can inspect what methods they've defined
-  eval "use $callerpackage;";
-
-  my $gripes; my $newgripes;
 
   foreach my $i (@interfaces) {
 
-    do {
-      eval "package $callerpackage; use $i;"; 
-      die "$callerpackage: interface $i could not be loaded: $@" if($@);
-    };
-
-    $newgripes = check_implements($i, $callerpackage);
-    $gripes .= ", and " if($gripes and $newgripes);
-    $gripes .= $newgripes if($newgripes);
-
-    # since they implement all required methods, nothing in $i will ever be called.
-    # however, we need this so that $callerpackage->isa($i) is true.
-
-    push @{$callerpackage.'::ISA'}, $i;
+    push @checkqueue, [$callerpackage, $i];
 
   }
-
-  if($gripes) {
-
-    die "$callerpackage is missing methods: $gripes";
-
-  }
-
-  undef $locks{$callerpackage};
 
 }
 
 
-sub check_implements {
+sub CHECK {
 
-  my $implements = shift;
-  my $callerpackage = shift;
-  my $gripes;
+  for my $thingie (@checkqueue) {
 
-  my $gripesf = 0;
+    my $callerpackage = $thingie->[0];
+    my $implements = $thingie->[1];
 
-  foreach my $i (grep { defined &{$implements.'::'.$_} } keys %{$implements.'::'}) {
+    my $gripes;
+    my $newgripes;
+  
+    do {
+      eval "package $callerpackage; use $implements;"; 
+      die "$callerpackage: interface $implements could not be loaded: $@" if($@);
+    };
+    
+    foreach my $i (grep { defined &{$implements.'::'.$_} } keys %{$implements.'::'}) {
+  
+      # since they implement all required methods, nothing in $i will ever be called.
+      # however, we need this so that $callerpackage->isa($i) is true.
+  
+      # warn "can: implements: $implements method: $i callerpackage: $callerpackage result: " . $callerpackage->can($i);
 
+      # unless(defined &{$callerpackage.'::'.$i}) { 
+      unless(UNIVERSAL::can($callerpackage, $i)) {
+        $gripes .= ', ' if $gripes;
+        $gripes .= "$i from $implements";
+      }
+  
+      $gripes .= ", and " if $gripes and $newgripes;
+      $gripes .= $newgripes if $newgripes;
+      $newgripes = undef;
 
-       # unless(defined &{$callerpackage.'::'.$i})  
-
-       unless($callerpackage->can($i)) {
-         $gripesf = 1;
-         $gripes .= ', ' if $gripes;
-         $gripes .= $i;
-       } 
+    }
+  
+    if($gripes) {
+  
+      die "$callerpackage is missing methods: $gripes";
+  
+    }
+  
+    push @{$callerpackage.'::ISA'}, $implements;
 
   }
-
-  return $gripes . " from $implements" if($gripesf);
-  return $gripes;
-
+    
 }
 
 1;
@@ -239,6 +232,10 @@ protocol.pm, by James Smith, also on CPAN
         An object is now considered to implemenant an interface if it ->can()
         do something, not just if it has a method.
         Hacked on docs a bit.
+  0.03: Doing an "eval $caller;" in our import() doesn't get perl to finish
+        loading the module that called us.  Somewhere before 5.8.8, this seems
+        to have stopped working.  So we use CHECK { } now like we should have
+        always.
 
 =head1 BUGS
 
