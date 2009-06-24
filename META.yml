@@ -1,10 +1,21 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         interface
-version:      0.03
-version_from: interface.pm
-installdirs:  site
+---
+name: interface
+version: 0.01
+author:
+  - 'Andy Armstrong <andy@hexten.net>'
+abstract: Declare support for an interface
+license: perl
+resources:
+  bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=interface
+  license: http://dev.perl.org/licenses/
 requires:
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30
+  Test::More: 0
+  latest: 0.02
+provides:
+  interface:
+    file: lib/interface.pm
+    version: 0.01
+generated_by: Module::Build version 0.33
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4

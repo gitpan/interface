@@ -1,7 +1,13 @@
+Build.PL
 Changes
-interface.pm
-Makefile.PL
+inc/MyBuilder.pm
+lib/interface.pm
 MANIFEST
 README
-t/1.t
-META.yml                                 Module meta-data (added by MakeMaker)
+t/00.load.t
+t/basic.t
+xt/author/manifest.t
+xt/author/pod-coverage.t
+xt/author/pod.t
+xt/author/preflight.t
+META.yml
